@@ -31,9 +31,9 @@ public class GamePlay : MonoBehaviour {
        // AssignTarget(PlayerList[0]);
         //DisplayPlayersList();
 
-        KillPlayer(PlayerList[0], PlayerList[1]);
+        //KillPlayer(PlayerList[0], PlayerList[1]);
 
-        // RemovePlayer(PlayerList[3]);
+        //RemovePlayer(PlayerList[3]);
         // DisplayPlayersList();
     }
 
@@ -46,27 +46,25 @@ public class GamePlay : MonoBehaviour {
 
     public void RemovePlayer(Player player)
     {
-        
+        //Remove player
+        Debug.Log("Removing player: " + player.PlayerName);
+        //set player as removed
+        player.RemovePlayer();
+        UI.instance.RemovePlayer(player);
+        RebuildTargetList();
+
         foreach (Player lookPlay in PlayerList)
         {
             //Remove from target lists
             if (lookPlay.Target == player)
             {
                 Debug.Log("player: " + lookPlay.PlayerName + " has lost its target");
+                //should Trigger a panel to assign new target
+
                 lookPlay.Target = null;
+                AssignTarget(lookPlay);
             }
-
-            //remove from targeted list
-            lookPlay.TargetedBy.Remove(player);
         }
-
-        //Remove player
-        Debug.Log("Removed player: " + player.PlayerName);
-
-        PlayerList.Remove(player);
-        UI.instance.RemovePlayer(player);
-
- 
     }
 
     public void KillPlayer(Player victim, Player assassin)
@@ -75,18 +73,37 @@ public class GamePlay : MonoBehaviour {
         victim.Killed(assassin);
         assassin.HasKilled();
         UI.instance.PlayerKilled(victim, assassin);
+
         AssignTarget(assassin);
+
+        foreach (Player lookPlay in PlayerList)
+        {
+            //Remove from target lists
+            if (lookPlay.Target == victim)
+            {
+                Debug.Log("player: " + lookPlay.PlayerName + " has lost its target");
+                //should Trigger a panel to assign new target
+                
+                lookPlay.Target = null;
+                AssignTarget(lookPlay);
+            }
+        }
+
+        
     }
 
 
-    public Player AssignTarget(Player killer)
+    public void AssignTarget(Player killer)
     {
+        RebuildTargetList();
+
         List<Player> TargetList = new List<Player>();
 
         List<Player> TempList = new List<Player>();
-        foreach(Player tempPlay in PlayerList)
+
+        foreach (Player tempPlay in PlayerList)
         {
-            TempList.Add(tempPlay);
+            if (tempPlay.IsItDead() == false && tempPlay != killer && tempPlay.isItRemoved() == false) TempList.Add(tempPlay);
         }
 
         TempList.Sort(delegate (Player x, Player y)
@@ -95,31 +112,65 @@ public class GamePlay : MonoBehaviour {
             else return x.TargetedBy.Count.CompareTo(y.TargetedBy.Count);
         });
 
+        
+        //test templist
+        foreach(Player player in TempList)
+        {
+            Debug.Log("Player: "+ player.PlayerName + " has " + player.TargetedBy.Count + " trackers");
+        }
+        
+
         int minCount = -1;
 
         foreach (Player target in TempList)
         {
-            if(minCount == -1) {
+            if (minCount == -1)
+            {
                 minCount = target.TargetedBy.Count;
             }
-            else {
+            else
+            {
                 if (target.TargetedBy.Count > minCount)
                     break;
             }
 
-            if (target.IsItDead() == false && target != killer)
-            {
-                TargetList.Add(target);
-            }
+            TargetList.Add(target);
         }
 
-        int pick = Random.Range(0, TargetList.Count);
-        Player PlayerPick = TargetList[pick];
+        if (TargetList.Count > 0) { 
+            int pick = Random.Range(0, TargetList.Count - 1);
+            Debug.Log("index chosen: " + pick + " - out of " + TargetList.Count);
+            Player PlayerPick = TargetList[pick];
 
-        PlayerPick.AddAssassin(killer); //assign assassin to target
-        killer.Target = PlayerPick; //assign target to killer
+            killer.Target = PlayerPick; //assign target to killer
+            Debug.Log("++ Kill assignment: " + killer.PlayerName + " must kill " + PlayerPick.PlayerName);
 
-        return PlayerPick;
+            RebuildTargetList();
+        }
+        else
+        {
+            Debug.Log("No target available for " + killer.PlayerName + ". Victory?");
+            killer.PlayerWins();
+            UI.instance.SetWinner(killer);
+        }
+
+    }
+
+    private void RebuildTargetList()
+    {
+        foreach (Player player in PlayerList)
+        {
+            player.ClearAssassinList();
+        }
+
+        foreach (Player player2 in PlayerList)
+        {
+            Player target = player2.Target;
+            if (target != null)
+            {
+                target.AddAssassin(player2);
+            }
+        }
     }
 
     private void Populate()
