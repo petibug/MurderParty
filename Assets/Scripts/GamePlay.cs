@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class GamePlay : MonoBehaviour {
 
@@ -51,17 +52,16 @@ public class GamePlay : MonoBehaviour {
         //set player as removed
         player.RemovePlayer();
         UI.instance.RemovePlayer(player);
-        RebuildTargetList();
 
         foreach (Player lookPlay in PlayerList)
         {
             //Remove from target lists
-            if (lookPlay.Target == player)
+            if (lookPlay.GetTarget() == player)
             {
                 Debug.Log("player: " + lookPlay.PlayerName + " has lost its target");
                 //should Trigger a panel to assign new target
 
-                lookPlay.Target = null;
+                lookPlay.ClearTarget();
                 AssignTarget(lookPlay);
             }
         }
@@ -79,12 +79,12 @@ public class GamePlay : MonoBehaviour {
         foreach (Player lookPlay in PlayerList)
         {
             //Remove from target lists
-            if (lookPlay.Target == victim)
+            if (lookPlay.GetTarget() == victim)
             {
                 Debug.Log("player: " + lookPlay.PlayerName + " has lost its target");
                 //should Trigger a panel to assign new target
                 
-                lookPlay.Target = null;
+                lookPlay.ClearTarget();
                 AssignTarget(lookPlay);
             }
         }
@@ -95,46 +95,38 @@ public class GamePlay : MonoBehaviour {
 
     public void AssignTarget(Player killer)
     {
-        RebuildTargetList();
 
         List<Player> TargetList = new List<Player>();
 
-        List<Player> TempList = new List<Player>();
+        Dictionary<Player,int> TempList = CountPlayersTargetList();
 
-        foreach (Player tempPlay in PlayerList)
-        {
-            if (tempPlay.IsItDead() == false && tempPlay != killer && tempPlay.isItRemoved() == false) TempList.Add(tempPlay);
-        }
 
-        TempList.Sort(delegate (Player x, Player y)
-        {
-            if (x.TargetedBy == null && y.TargetedBy == null) return 0;
-            else return x.TargetedBy.Count.CompareTo(y.TargetedBy.Count);
-        });
-
-        
-        //test templist
-        foreach(Player player in TempList)
-        {
-            Debug.Log("Player: "+ player.PlayerName + " has " + player.TargetedBy.Count + " trackers");
-        }
-        
 
         int minCount = -1;
 
-        foreach (Player target in TempList)
+        foreach (KeyValuePair<Player, int> KVPair in TempList)
         {
-            if (minCount == -1)
-            {
-                minCount = target.TargetedBy.Count;
-            }
-            else
-            {
-                if (target.TargetedBy.Count > minCount)
-                    break;
-            }
 
-            TargetList.Add(target);
+            if (KVPair.Key != killer) {
+                Debug.Log("Player: " + KVPair.Key.PlayerName + " has " + KVPair.Value + " trackers");
+
+
+                //only get the players with the lowest assassins
+                if (minCount == -1)
+                {
+                    minCount = KVPair.Value;
+                }
+                else
+                {
+                    if (KVPair.Value > minCount)
+                        break;
+                }
+
+                //add player to target list
+                    TargetList.Add(KVPair.Key);
+
+                //need to add a line for trying to not add a target if already targeted by this person.
+            }
         }
 
         if (TargetList.Count > 0) { 
@@ -142,10 +134,9 @@ public class GamePlay : MonoBehaviour {
             Debug.Log("index chosen: " + pick + " - out of " + TargetList.Count);
             Player PlayerPick = TargetList[pick];
 
-            killer.Target = PlayerPick; //assign target to killer
+            killer.AssignTarget(PlayerPick); //assign target to killer
             Debug.Log("++ Kill assignment: " + killer.PlayerName + " must kill " + PlayerPick.PlayerName);
 
-            RebuildTargetList();
         }
         else
         {
@@ -156,21 +147,66 @@ public class GamePlay : MonoBehaviour {
 
     }
 
-    private void RebuildTargetList()
+    private Dictionary<Player, int> CountPlayersTargetList()
     {
+        Dictionary<Player, int> PlayerAssassinCount = new Dictionary<Player, int>();
+        Dictionary<Player, int> PlayerAssassinCountSorted = new Dictionary<Player, int>();
+
         foreach (Player player in PlayerList)
         {
-            player.ClearAssassinList();
-        }
-
-        foreach (Player player2 in PlayerList)
-        {
-            Player target = player2.Target;
-            if (target != null)
+            if (player.IsItDead() == false && player.isItRemoved() == false)
             {
-                target.AddAssassin(player2);
+                if (!PlayerAssassinCount.ContainsKey(player))
+                {
+                    PlayerAssassinCount.Add(player, 0);
+                }
+
+                if (player.GetTarget() != null)
+                {
+                    if (PlayerAssassinCount.ContainsKey(player.GetTarget()))
+                    {
+                        PlayerAssassinCount[player.GetTarget()]++;
+                    }
+                    else
+                    {
+                        PlayerAssassinCount.Add(player.GetTarget(), 1);
+                    }
+                }                
             }
         }
+
+
+
+        // Order by values.
+        // ... Use LINQ to specify sorting by value.
+        var items = from pair in PlayerAssassinCount
+                    orderby pair.Value ascending
+                    select pair;
+
+
+        // Display results.
+        foreach (KeyValuePair<Player, int> pair in items)
+        {
+            Debug.Log("test sort dictionary : " + pair.Key.PlayerName + " : " + pair.Value);
+            PlayerAssassinCountSorted.Add(pair.Key, pair.Value);
+        }
+        return PlayerAssassinCountSorted;
+    }
+
+    public List<Player> GetPlayerAssassinList(Player victim)
+    {
+        List<Player> AssassinList = new List<Player>();
+
+        foreach (Player player in PlayerList)
+        {
+            if (player.GetTarget() == victim && player != victim)
+            {
+                AssassinList.Add(player);
+            }
+        }
+
+
+        return AssassinList;
     }
 
     private void Populate()

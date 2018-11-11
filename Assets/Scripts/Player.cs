@@ -11,9 +11,8 @@ public class Player : IEquatable<Player>,IComparable<Player>
     private bool isDead;
     private bool removed;
     private bool isVictory;
-    public Player Target;
+    private Player Target;
     public Player KilledBy;
-    public List<Player> TargetedBy;
     public int kills;
 
 
@@ -24,7 +23,6 @@ public class Player : IEquatable<Player>,IComparable<Player>
         isDead = false;
         removed = false;
         isVictory = false;
-        TargetedBy = new List<Player>();
         kills = 0;
     }
 
@@ -33,7 +31,6 @@ public class Player : IEquatable<Player>,IComparable<Player>
         isDead = true;
         KilledBy = assassin;
         Target = null;
-        ClearAssassinList();
     }
 
     public bool IsItDead()
@@ -46,29 +43,25 @@ public class Player : IEquatable<Player>,IComparable<Player>
         kills++;
     }
 
-    public void AddAssassin(Player assassin)
+    public void AssignTarget(Player target)
     {
-        if (!TargetedBy.Exists(x => x == assassin))
-        {
-            TargetedBy.Add(assassin);
-        }
+        Target = target;
     }
 
-    public void RemoveAssassin(Player assassin)
+    public Player GetTarget()
     {
-        TargetedBy.Remove(assassin);
+        return Target;
     }
 
-    public void ClearAssassinList()
+    public void ClearTarget()
     {
-        TargetedBy.Clear();
+        Target = null;
     }
 
     public void RemovePlayer()
     {
         removed = true;
         Target = null;
-        ClearAssassinList();
     }
 
     public bool isItRemoved()

@@ -81,7 +81,7 @@ public class UI : MonoBehaviour {
         PlayerPanel.SetActive(true);
         SetPlayerName(PlayerPanel, player.PlayerName);
         SetPlayerJob(PlayerPanel, player.PlayerJob);
-        string targetName = player.Target == null ? "" : player.Target.PlayerName;
+        string targetName = player.GetTarget() == null ? "" : player.GetTarget().PlayerName;
         SetPlayerTarget(PlayerPanel, targetName);
 
         //main buttons
@@ -98,7 +98,8 @@ public class UI : MonoBehaviour {
             GameObject.Destroy(child.gameObject);
         }
 
-        foreach(Player assassin in player.TargetedBy)
+        List<Player> PlayerAssassins = GamePlay.instance.GetPlayerAssassinList(player);
+        foreach(Player assassin in PlayerAssassins)
         {
             GameObject newPlayerUI = Instantiate(PlayerShortPrefab);
             newPlayerUI.transform.SetParent(PlayerPanelAssassin.transform);
