@@ -9,13 +9,23 @@ public class UI : MonoBehaviour {
 
     public static UI instance = null;
 
-    public RectTransform myPanel;
+
+
+    //prefabs
     public GameObject PlayerPrefab;
     public GameObject PlayerShortPrefab;
+
+    //panels
+    public RectTransform myPanel;
     public GameObject PlayerPanel;
     public GameObject PlayerPanelAssassin;
-    public Button AssignTarget;
-    public Button Remove;
+    public GameObject ConfirmationPanel;
+    private enum ConfirmationTypes { kill, remove, assign };
+
+    //buttons
+    public Button AssignTarget_Button;
+    public Button RemovePlayer_Button;
+    public Button ConfirmationOK_Button;
 
     public Dictionary<Player, GameObject> UIPlayerlist;
 
@@ -33,20 +43,20 @@ public class UI : MonoBehaviour {
 
 
     // Use this for initialization
-    void Start () {
-        
+    void Start() {
+
     }
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+
+    // Update is called once per frame
+    void Update() {
+
+    }
 
     public void AddPlayer(Player newPlayer)
     {
         GameObject newPlayerUI = Instantiate(PlayerPrefab);
         newPlayerUI.transform.SetParent(myPanel);
-        RectTransform T =  newPlayerUI.GetComponent<RectTransform>();
+        RectTransform T = newPlayerUI.GetComponent<RectTransform>();
         T.localScale = new Vector3(1, 1, 1);
 
         UIPlayerlist.Add(newPlayer, newPlayerUI);
@@ -56,7 +66,7 @@ public class UI : MonoBehaviour {
 
         //button
         Button button = newPlayerUI.GetComponent<Button>();
-        button.onClick.AddListener(delegate { PlayerClicked(newPlayer); });
+        button.onClick.AddListener(delegate { OpenPlayerPanel(newPlayer); });
 
         //style
         SetPlayerStyle(newPlayer);
@@ -75,44 +85,106 @@ public class UI : MonoBehaviour {
         SetPlayerStyle(victim);
     }
 
-    private void PlayerClicked(Player player)
+    private void OpenPlayerPanel(Player player)
+    {
+        PaintPlayerPanel(player);
+        OpenPanel(PlayerPanel);
+    }
+
+    private void PaintPlayerPanel(Player player)
     {
         //names 
-        PlayerPanel.SetActive(true);
         SetPlayerName(PlayerPanel, player.PlayerName);
         SetPlayerJob(PlayerPanel, player.PlayerJob);
         string targetName = player.GetTarget() == null ? "" : player.GetTarget().PlayerName;
         SetPlayerTarget(PlayerPanel, targetName);
 
         //main buttons
-        AssignTarget.onClick.RemoveAllListeners();
-        AssignTarget.onClick.AddListener(delegate { GamePlay.instance.AssignTarget(player); });
-        AssignTarget.onClick.AddListener(ClosePlayerPanel);
-        Remove.onClick.RemoveAllListeners();
-        Remove.onClick.AddListener(delegate { GamePlay.instance.RemovePlayer(player); });
-        Remove.onClick.AddListener(ClosePlayerPanel);
+        //Assign target button
+        AssignTarget_Button.onClick.RemoveAllListeners();
+        AssignTarget_Button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.assign, player); });
+       // AssignTarget_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
 
-        //trackers
+        //Remove player button
+        RemovePlayer_Button.onClick.RemoveAllListeners();
+        RemovePlayer_Button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.remove, player); });
+       // RemovePlayer_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
+
+        //trackers list
+        //clear list
         foreach (Transform child in PlayerPanelAssassin.transform)
         {
             GameObject.Destroy(child.gameObject);
         }
-
+        //create new list
         List<Player> PlayerAssassins = GamePlay.instance.GetPlayerAssassinList(player);
-        foreach(Player assassin in PlayerAssassins)
+        foreach (Player assassin in PlayerAssassins)
         {
             GameObject newPlayerUI = Instantiate(PlayerShortPrefab);
             newPlayerUI.transform.SetParent(PlayerPanelAssassin.transform);
             RectTransform T = newPlayerUI.GetComponent<RectTransform>();
             T.localScale = new Vector3(1, 1, 1);
 
+            //display name
             SetPlayerName(newPlayerUI, assassin.PlayerName);
 
-            //button
+            //button to assign killer
             Button button = newPlayerUI.GetComponent<Button>();
-            button.onClick.AddListener(delegate { GamePlay.instance.KillPlayer(player,assassin); });
-            button.onClick.AddListener(ClosePlayerPanel);
+            button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.kill, player, assassin); });
+          //  button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
         }
+    }
+
+    private void ConfirmAction(int type, Player victim, Player assassin = null)
+    {
+        PaintConfirmationPanel(type, victim, assassin);
+        OpenPanel(ConfirmationPanel);
+    }
+
+    private void PaintConfirmationPanel(int type, Player victim, Player assassin = null)
+    {
+        //reset
+        string ConfirmationText = "";
+        ConfirmationOK_Button.onClick.RemoveAllListeners();
+
+        //assign
+        switch (type)
+        {
+            case (int)ConfirmationTypes.assign:
+                //text
+                ConfirmationText = "Are you sure you want to assign a new target to \n" + victim.PlayerName + "?";
+                //buttons
+                ConfirmationOK_Button.onClick.AddListener(delegate { GamePlay.instance.AssignTarget(victim); });
+                ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(ConfirmationPanel); });
+                ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
+
+                break;
+
+            case (int)ConfirmationTypes.kill:
+                //text
+                ConfirmationText = "Are you sure you want to confirm that \n" + assassin.PlayerName + " has killed " + victim.PlayerName + "?";
+
+                //buttons
+                ConfirmationOK_Button.onClick.AddListener(delegate { GamePlay.instance.KillPlayer(victim, assassin); });
+                ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(ConfirmationPanel); });
+                ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
+
+                break;
+
+            case (int)ConfirmationTypes.remove:
+                //text
+                ConfirmationText = "Are you sure you want to remove this player: \n" + victim.PlayerName + "?";
+                //buttons
+                ConfirmationOK_Button.onClick.AddListener(delegate { GamePlay.instance.RemovePlayer(victim); });
+                ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(ConfirmationPanel); });
+                ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
+
+                break;
+
+        }
+
+        GameObject ConfTextGO = ConfirmationPanel.transform.Find("ConfirmationText").gameObject;
+        ConfTextGO.GetComponent<Text>().text = ConfirmationText;
     }
 
     public void SetWinner(Player player)
@@ -165,12 +237,32 @@ public class UI : MonoBehaviour {
         }
     }
 
-
-    public void ClosePlayerPanel()
+    private void ClosePanel (GameObject panel)
     {
-        PlayerPanel.SetActive(false);
+        BasicPanel PanelFunction;
+        if (PanelFunction = panel.GetComponent<BasicPanel>())
+        {
+            PanelFunction.ClosePanel();
+        }
+        else
+        {
+            panel.SetActive(false);
+            Debug.Log("Forcing panel closing");
+        }
     }
- 
 
+    private void OpenPanel(GameObject panel)
+    {
+        BasicPanel PanelFunction;
+        if (PanelFunction = panel.GetComponent<BasicPanel>())
+        {
+            PanelFunction.OpenPanel();
+        }
+        else
+        {
+            panel.SetActive(true);
+            Debug.Log("Forcing panel opening");
+        }
+    }
 
 }
