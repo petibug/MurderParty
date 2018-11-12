@@ -23,19 +23,15 @@ public class GamePlay : MonoBehaviour {
     // Use this for initialization
     void Start () {
         PlayerList = new List<Player>();
+        NewGame();
+    }
+
+    public void NewGame(bool ClearPlayers = true)
+    {
+        UI.instance.ResetUI();
+        PlayerList.Clear();
         Populate();
- 
-        foreach(Player player in PlayerList)
-        {
-            AssignTarget(player);
-        }
-       // AssignTarget(PlayerList[0]);
-        //DisplayPlayersList();
-
-        //KillPlayer(PlayerList[0], PlayerList[1]);
-
-        //RemovePlayer(PlayerList[3]);
-        // DisplayPlayersList();
+        AssignAllTargets();
     }
 
     public void AddPlayer(string name, string job)
@@ -53,18 +49,8 @@ public class GamePlay : MonoBehaviour {
         player.RemovePlayer();
         UI.instance.RemovePlayer(player);
 
-        foreach (Player lookPlay in PlayerList)
-        {
-            //Remove from target lists
-            if (lookPlay.GetTarget() == player)
-            {
-                Debug.Log("player: " + lookPlay.PlayerName + " has lost its target");
-                //should Trigger a panel to assign new target
-
-                lookPlay.ClearTarget();
-                AssignTarget(lookPlay);
-            }
-        }
+        //look for target loss
+        CheckLostTarget(player);
     }
 
     public void KillPlayer(Player victim, Player assassin)
@@ -74,26 +60,32 @@ public class GamePlay : MonoBehaviour {
         assassin.HasKilled();
         UI.instance.PlayerKilled(victim, assassin);
 
-        AssignTarget(assassin);
+        AssignTarget(assassin,true);
 
+        //look for target loss
+        CheckLostTarget(victim);
+
+
+
+    }
+
+    private void CheckLostTarget(Player removedPlayer)
+    {
+        //look for target loss
         foreach (Player lookPlay in PlayerList)
         {
             //Remove from target lists
-            if (lookPlay.GetTarget() == victim)
+            if (lookPlay.GetTarget() == removedPlayer)
             {
                 Debug.Log("player: " + lookPlay.PlayerName + " has lost its target");
-                //should Trigger a panel to assign new target
-                
+
                 lookPlay.ClearTarget();
-                AssignTarget(lookPlay);
+                AssignTarget(lookPlay,true);
             }
         }
-
-        
     }
 
-
-    public void AssignTarget(Player killer)
+    public void AssignTarget(Player killer, bool ShowTargetMessage = false)
     {
 
         List<Player> TargetList = new List<Player>();
@@ -122,7 +114,7 @@ public class GamePlay : MonoBehaviour {
 
                 //add player to target list
                 TargetList.Add(KVPair.Key);
-                Debug.Log("Target added: " + KVPair.Key.PlayerName + " with " + KVPair.Value + " trackers");
+                //Debug.Log("Target added: " + KVPair.Key.PlayerName + " with " + KVPair.Value + " trackers");
             }
         }
 
@@ -144,7 +136,7 @@ public class GamePlay : MonoBehaviour {
             {
                 IndexToRemove = TargetList.IndexOf(PlayerToKeep) == 0 ? 1 : 0;
                 TargetList.RemoveAt(IndexToRemove);
-                Debug.Log("Potential futur self-assign forced: " + PlayerToKeep.PlayerName);
+                //Debug.Log("Potential futur self-assign forced: " + PlayerToKeep.PlayerName);
             }
         }
 
@@ -157,7 +149,7 @@ public class GamePlay : MonoBehaviour {
                 {
                     if (TargetList.Remove(assassin)) //remove
                     { 
-                        Debug.Log("Potential target removed: " + assassin.PlayerName);
+                        //Debug.Log("Potential target removed: " + assassin.PlayerName);
                     }
                 }
             }
@@ -166,11 +158,17 @@ public class GamePlay : MonoBehaviour {
         //assign target
         if (TargetList.Count > 0) { 
             int pick = Random.Range(0, TargetList.Count - 1);
-            Debug.Log("index chosen: " + pick + " - out of " + TargetList.Count);
+            //Debug.Log("index chosen: " + pick + " - out of " + TargetList.Count);
             Player PlayerPick = TargetList[pick];
 
             killer.AssignTarget(PlayerPick); //assign target to killer
             Debug.Log("++ Kill assignment: " + killer.PlayerName + " must kill " + PlayerPick.PlayerName);
+
+            //display message
+            if (ShowTargetMessage == true)
+            {
+                UI.instance.AddPlayerAlert(PlayerPick, killer);
+            }
 
         }
         else //if no target is available
@@ -180,6 +178,14 @@ public class GamePlay : MonoBehaviour {
             UI.instance.SetWinner(killer);
         }
 
+    }
+
+    private void AssignAllTargets()
+    {
+        foreach (Player player in PlayerList)
+        {
+            AssignTarget(player,true);
+        }
     }
 
     private Dictionary<Player, int> CountPlayersTargetList()
@@ -209,16 +215,13 @@ public class GamePlay : MonoBehaviour {
                 }                
             }
         }
-
-
-
+        
         // Order by values.
         // ... Use LINQ to specify sorting by value.
         var items = from pair in PlayerAssassinCount
                     orderby pair.Value ascending
                     select pair;
-
-
+        
         // Display results.
         foreach (KeyValuePair<Player, int> pair in items)
         {

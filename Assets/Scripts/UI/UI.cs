@@ -9,25 +9,29 @@ public class UI : MonoBehaviour {
 
     public static UI instance = null;
 
-
-
     //prefabs
     public GameObject PlayerPrefab;
     public GameObject PlayerShortPrefab;
 
     //panels
-    public RectTransform myPanel;
+    public RectTransform ListPlayerPanel;
     public GameObject PlayerPanel;
     public GameObject PlayerPanelAssassin;
     public GameObject ConfirmationPanel;
-    private enum ConfirmationTypes { kill, remove, assign };
+    public GameObject PlayerAlertPanel;
+
+    public bool AlertPanelOpen;
+
 
     //buttons
     public Button AssignTarget_Button;
     public Button RemovePlayer_Button;
     public Button ConfirmationOK_Button;
 
+    private enum ConfirmationTypes { kill, remove, assign };
+
     public Dictionary<Player, GameObject> UIPlayerlist;
+    private List<PlayerAlert> PlayerAlerts;
 
     //Awake is always called before any Start functions
     void Awake()
@@ -39,6 +43,8 @@ public class UI : MonoBehaviour {
             Destroy(gameObject);
 
         UIPlayerlist = new Dictionary<Player, GameObject>();
+        PlayerAlerts = new List<PlayerAlert>();
+        AlertPanelOpen = false;
     }
 
 
@@ -47,29 +53,21 @@ public class UI : MonoBehaviour {
 
     }
 
-    // Update is called once per frame
-    void Update() {
-
+    public void ResetUI()
+    {
+        ClearPlayers();
     }
 
     public void AddPlayer(Player newPlayer)
     {
         GameObject newPlayerUI = Instantiate(PlayerPrefab);
-        newPlayerUI.transform.SetParent(myPanel);
+        newPlayerUI.transform.SetParent(ListPlayerPanel);
         RectTransform T = newPlayerUI.GetComponent<RectTransform>();
         T.localScale = new Vector3(1, 1, 1);
 
         UIPlayerlist.Add(newPlayer, newPlayerUI);
 
-        SetPlayerName(newPlayerUI, newPlayer.PlayerName);
-        SetPlayerScore(newPlayerUI, newPlayer.kills);
-
-        //button
-        Button button = newPlayerUI.GetComponent<Button>();
-        button.onClick.AddListener(delegate { OpenPlayerPanel(newPlayer); });
-
-        //style
-        SetPlayerStyle(newPlayer);
+        PaintPlayerList(newPlayer);
     }
 
     public void RemovePlayer(Player player)
@@ -85,10 +83,52 @@ public class UI : MonoBehaviour {
         SetPlayerStyle(victim);
     }
 
+    public void AddPlayerAlert(Player victim, Player assassin)
+    {
+        PlayerAlert Alert = new PlayerAlert(victim.PlayerName, assassin.PlayerName);
+        PlayerAlerts.Add(Alert);
+        PlayPlayerAlert();
+    }
+
+    public void PlayPlayerAlert()
+    {
+        if(PlayerAlerts.Count > 0 && AlertPanelOpen == false)
+        {
+            PaintPlayerAlert(PlayerAlerts[0].GetVictimName(), PlayerAlerts[0].GetAssassinName());
+            OpenPanel(PlayerAlertPanel);
+            AlertPanelOpen = true;
+            PlayerAlerts.RemoveAt(0);
+        }
+    }
+
+    public void ClearPlayers()
+    {
+        UIPlayerlist.Clear();
+
+        foreach (Transform child in ListPlayerPanel)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+    }
+
     private void OpenPlayerPanel(Player player)
     {
         PaintPlayerPanel(player);
         OpenPanel(PlayerPanel);
+    }
+
+    private void PaintPlayerList(Player player)
+    {
+        GameObject PlayerUI = UIPlayerlist[player];
+
+        SetPlayerName(PlayerUI, player.PlayerName);
+        SetPlayerScore(PlayerUI, player.kills);
+
+        //button
+        Button button = PlayerUI.GetComponent<Button>();
+        button.onClick.AddListener(delegate { OpenPlayerPanel(player); });
+
+        SetPlayerStyle(player);
     }
 
     private void PaintPlayerPanel(Player player)
@@ -133,6 +173,16 @@ public class UI : MonoBehaviour {
             button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.kill, player, assassin); });
           //  button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
         }
+    }
+
+    private void PaintPlayerAlert(string victim, string assassin)
+    {
+        GameObject Name;
+         Name = PlayerAlertPanel.transform.Find("assassinName").gameObject;
+        Name.GetComponent<Text>().text = assassin;
+
+         Name = PlayerAlertPanel.transform.Find("victimeName").gameObject;
+        Name.GetComponent<Text>().text = victim;
     }
 
     private void ConfirmAction(int type, Player victim, Player assassin = null)
