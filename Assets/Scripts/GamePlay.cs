@@ -108,9 +108,7 @@ public class GamePlay : MonoBehaviour {
         {
 
             if (KVPair.Key != killer) {
-                Debug.Log("Player: " + KVPair.Key.PlayerName + " has " + KVPair.Value + " trackers");
-
-
+ 
                 //only get the players with the lowest assassins
                 if (minCount == -1)
                 {
@@ -123,12 +121,49 @@ public class GamePlay : MonoBehaviour {
                 }
 
                 //add player to target list
-                    TargetList.Add(KVPair.Key);
-
-                //need to add a line for trying to not add a target if already targeted by this person.
+                TargetList.Add(KVPair.Key);
+                Debug.Log("Target added: " + KVPair.Key.PlayerName + " with " + KVPair.Value + " trackers");
             }
         }
 
+        //check if unassigned target may only be able to target themselves
+        if (TargetList.Count == 2)
+        {
+            Player PlayerToKeep = null;
+            int IndexToRemove;
+            foreach (Player target in TargetList)
+            {
+                if (target.GetTarget() == null && TargetList.Contains(target))
+                {
+                    PlayerToKeep = target;
+                    break;
+                }
+            }
+
+            if (PlayerToKeep != null)
+            {
+                IndexToRemove = TargetList.IndexOf(PlayerToKeep) == 0 ? 1 : 0;
+                TargetList.RemoveAt(IndexToRemove);
+                Debug.Log("Potential futur self-assign forced: " + PlayerToKeep.PlayerName);
+            }
+        }
+
+        //remove from assassin targeting the player from the target list if possible.
+        if (TargetList.Count > 1) { 
+            List<Player> AssassinsOfPlayer = GetPlayerAssassinList(killer);
+            foreach (Player assassin in AssassinsOfPlayer)
+            {
+                if (TargetList.Count > 1)
+                {
+                    if (TargetList.Remove(assassin)) //remove
+                    { 
+                        Debug.Log("Potential target removed: " + assassin.PlayerName);
+                    }
+                }
+            }
+        }
+
+        //assign target
         if (TargetList.Count > 0) { 
             int pick = Random.Range(0, TargetList.Count - 1);
             Debug.Log("index chosen: " + pick + " - out of " + TargetList.Count);
@@ -138,7 +173,7 @@ public class GamePlay : MonoBehaviour {
             Debug.Log("++ Kill assignment: " + killer.PlayerName + " must kill " + PlayerPick.PlayerName);
 
         }
-        else
+        else //if no target is available
         {
             Debug.Log("No target available for " + killer.PlayerName + ". Victory?");
             killer.PlayerWins();
@@ -187,7 +222,7 @@ public class GamePlay : MonoBehaviour {
         // Display results.
         foreach (KeyValuePair<Player, int> pair in items)
         {
-            Debug.Log("test sort dictionary : " + pair.Key.PlayerName + " : " + pair.Value);
+            // Debug.Log("test sort dictionary : " + pair.Key.PlayerName + " : " + pair.Value);
             PlayerAssassinCountSorted.Add(pair.Key, pair.Value);
         }
         return PlayerAssassinCountSorted;
