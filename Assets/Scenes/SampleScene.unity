@@ -316,9 +316,10 @@ MonoBehaviour:
   myPanel: {fileID: 331368937}
   PlayerPanel: {fileID: 966767713}
   PlayerPanelAssassin: {fileID: 1354786273}
-  ConfirmationPanel: {fileID: 0}
-  AssignTarget: {fileID: 1574345432}
-  Remove: {fileID: 1161807337}
+  ConfirmationPanel: {fileID: 1987079567}
+  AssignTarget_Button: {fileID: 1574345432}
+  RemovePlayer_Button: {fileID: 1161807337}
+  ConfirmationOK_Button: {fileID: 533523770}
 --- !u!1 &166409008
 GameObject:
   m_ObjectHideFlags: 0
@@ -2528,7 +2529,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1987079568
 RectTransform:
   m_ObjectHideFlags: 0
