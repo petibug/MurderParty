@@ -14,11 +14,13 @@ public class UI : MonoBehaviour {
     public GameObject PlayerShortPrefab;
 
     //panels
+    public GameObject HomePanel;
     public RectTransform ListPlayerPanel;
     public GameObject PlayerPanel;
     public GameObject PlayerPanelAssassin;
     public GameObject ConfirmationPanel;
     public GameObject PlayerAlertPanel;
+    public GameObject AddPlayerPanel;
 
     public bool AlertPanelOpen;
 
@@ -33,6 +35,9 @@ public class UI : MonoBehaviour {
     public Dictionary<Player, GameObject> UIPlayerlist;
     private List<PlayerAlert> PlayerAlerts;
 
+    //managers
+    GamePlay GamePlayManager;
+
     //Awake is always called before any Start functions
     void Awake()
     {
@@ -42,6 +47,7 @@ public class UI : MonoBehaviour {
         else if (instance != this)
             Destroy(gameObject);
 
+
         UIPlayerlist = new Dictionary<Player, GameObject>();
         PlayerAlerts = new List<PlayerAlert>();
         AlertPanelOpen = false;
@@ -50,12 +56,15 @@ public class UI : MonoBehaviour {
 
     // Use this for initialization
     void Start() {
-
+        GamePlayManager = GamePlay.instance;
+        
     }
 
     public void ResetUI()
     {
         ClearPlayers();
+        HidePanels();
+        PlayerAlerts.Clear();
     }
 
     public void AddPlayer(Player newPlayer)
@@ -75,12 +84,20 @@ public class UI : MonoBehaviour {
         SetPlayerStyle(player);
     }
 
+    public void AssignTargetToPlayer(Player player)
+    {
+           SetPlayerStyle(player);
+    }
+
     public void PlayerKilled(Player victim, Player assassin)
     {
-
-        SetPlayerName(UIPlayerlist[victim], victim.PlayerName + " - killed");
         SetPlayerScore(UIPlayerlist[assassin], assassin.kills);
         SetPlayerStyle(victim);
+    }
+
+    public void SetWinner(Player player)
+    {
+        SetPlayerStyle(player);
     }
 
     public void AddPlayerAlert(Player victim, Player assassin)
@@ -111,11 +128,32 @@ public class UI : MonoBehaviour {
         }
     }
 
+    public void NewGame()
+    {
+        OpenPanel(AddPlayerPanel);
+    }
+
+    public void ResetPlayer(Player player)
+    {
+        GameObject playerUI = UIPlayerlist[player];
+        SetPlayerScore(UIPlayerlist[player], player.kills);
+        SetPlayerName(UIPlayerlist[player], player.PlayerName);
+        SetPlayerStyle(player);
+    }
+
     private void OpenPlayerPanel(Player player)
     {
         PaintPlayerPanel(player);
         OpenPanel(PlayerPanel);
     }
+
+    private void ConfirmAction(int type, Player victim, Player assassin = null)
+    {
+        PaintConfirmationPanel(type, victim, assassin);
+        OpenPanel(ConfirmationPanel);
+    }
+
+    //*** PAINT PANELS ***//
 
     private void PaintPlayerList(Player player)
     {
@@ -157,7 +195,7 @@ public class UI : MonoBehaviour {
             GameObject.Destroy(child.gameObject);
         }
         //create new list
-        List<Player> PlayerAssassins = GamePlay.instance.GetPlayerAssassinList(player);
+        List<Player> PlayerAssassins = GamePlayManager.GetPlayerAssassinList(player);
         foreach (Player assassin in PlayerAssassins)
         {
             GameObject newPlayerUI = Instantiate(PlayerShortPrefab);
@@ -185,11 +223,7 @@ public class UI : MonoBehaviour {
         Name.GetComponent<Text>().text = victim;
     }
 
-    private void ConfirmAction(int type, Player victim, Player assassin = null)
-    {
-        PaintConfirmationPanel(type, victim, assassin);
-        OpenPanel(ConfirmationPanel);
-    }
+
 
     private void PaintConfirmationPanel(int type, Player victim, Player assassin = null)
     {
@@ -204,7 +238,7 @@ public class UI : MonoBehaviour {
                 //text
                 ConfirmationText = "Are you sure you want to assign a new target to \n" + victim.PlayerName + "?";
                 //buttons
-                ConfirmationOK_Button.onClick.AddListener(delegate { GamePlay.instance.AssignTarget(victim); });
+                ConfirmationOK_Button.onClick.AddListener(delegate { GamePlayManager.AssignTargetToPlayer(victim); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(ConfirmationPanel); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
 
@@ -215,7 +249,7 @@ public class UI : MonoBehaviour {
                 ConfirmationText = "Are you sure you want to confirm that \n" + assassin.PlayerName + " has killed " + victim.PlayerName + "?";
 
                 //buttons
-                ConfirmationOK_Button.onClick.AddListener(delegate { GamePlay.instance.KillPlayer(victim, assassin); });
+                ConfirmationOK_Button.onClick.AddListener(delegate { GamePlayManager.KillPlayer(victim, assassin); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(ConfirmationPanel); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
 
@@ -225,7 +259,7 @@ public class UI : MonoBehaviour {
                 //text
                 ConfirmationText = "Are you sure you want to remove this player: \n" + victim.PlayerName + "?";
                 //buttons
-                ConfirmationOK_Button.onClick.AddListener(delegate { GamePlay.instance.RemovePlayer(victim); });
+                ConfirmationOK_Button.onClick.AddListener(delegate { GamePlayManager.RemovePlayer(victim); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(ConfirmationPanel); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
 
@@ -237,10 +271,9 @@ public class UI : MonoBehaviour {
         ConfTextGO.GetComponent<Text>().text = ConfirmationText;
     }
 
-    public void SetWinner(Player player)
-    {
-        SetPlayerStyle(player);
-    }
+    //sub painting
+
+
 
     private void SetPlayerName(GameObject playerUI, String name)
     {
@@ -269,22 +302,40 @@ public class UI : MonoBehaviour {
     private void SetPlayerStyle(Player player)
     {
         GameObject playerUI = UIPlayerlist[player];
+
         Image image = playerUI.GetComponent<Image>();
+        PlayerList iconHolder = playerUI.GetComponent<PlayerList>();
+        
+        iconHolder.SetIcon((int)PlayerList.IconType.nothing);
+        image.color = new Color(1, 1, 1);
 
-        if (player.isVictorious() == true)
-        {
-            image.color = new Color(0, 1, 0);
-        }
-
-        if (player.isItRemoved() == true)
-        {
-            image.color = new Color(.5f, .5f, .5f);
-        }
-
-        if(player.IsItDead() == true)
+        if (player.IsItDead() == true)
         {
             image.color = new Color(1, 0, 0);
+            iconHolder.SetIcon((int)PlayerList.IconType.dead);
         }
+        else if(player.isItRemoved() == true)
+        {
+            image.color = new Color(.5f, .5f, .5f);
+            iconHolder.SetIcon((int)PlayerList.IconType.removed);
+        }
+        else if(player.isVictorious() == true)
+        {
+            image.color = new Color(0, 1, 0);
+            iconHolder.SetIcon((int)PlayerList.IconType.victorious);
+        }
+        else if(player.GetTarget() != null)
+        {
+            iconHolder.SetIcon((int)PlayerList.IconType.target);
+        }
+    }
+
+    private void HidePanels()
+    {
+        PlayerPanel.SetActive(false);
+        ConfirmationPanel.SetActive(false);
+        PlayerAlertPanel.SetActive(false);
+        HomePanel.SetActive(false);
     }
 
     private void ClosePanel (GameObject panel)

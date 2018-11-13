@@ -7,8 +7,11 @@ public class GamePlay : MonoBehaviour {
 
     public static GamePlay instance = null;
 
+    private GameData MainGameData;
+    private PersistentData LoadSave;
     public List<Player> PlayerList;
-
+    private UI UIManager;
+    
 
     //Awake is always called before any Start functions
     void Awake()
@@ -18,27 +21,82 @@ public class GamePlay : MonoBehaviour {
 
         else if (instance != this)
             Destroy(gameObject);
+
+      // DontDestroyOnLoad(this.gameObject);
     }
 
     // Use this for initialization
     void Start () {
-        PlayerList = new List<Player>();
-        NewGame();
+        UIManager = UI.instance;
+        LoadSave = PersistentData.instance;
+
+        MainGameData = new GameData();
+        PlayerList = MainGameData.PlayerList;
+
+        LoadSave.LoadData(PlayerList);
+
+        ContinueGame();
     }
+
+    //****** MAIN ACTIONS *****\\
 
     public void NewGame(bool ClearPlayers = true)
     {
-        UI.instance.ResetUI();
-        PlayerList.Clear();
-        Populate();
-        AssignAllTargets();
+        Debug.Log("new Game");
+
+        if (ClearPlayers == true)
+        {
+            Debug.Log("clearing players");
+            UIManager.ResetUI();
+            PlayerList.Clear();
+            UIManager.NewGame();
+            //PopulateSample();
+            //AssignAllTargets();
+        }
+        else
+        {
+            Debug.Log("Reseting players");
+            UIManager.ResetUI();
+            foreach (Player player in PlayerList)
+            {
+                player.Reset();
+            }
+            Populate();
+            AssignAllTargets();
+        }
     }
 
-    public void AddPlayer(string name, string job)
+    public void ContinueGame()
+    {
+        Debug.Log("Continuing loaded Game");
+        UIManager.ResetUI();
+        Populate();
+    }
+
+    public Player AddPlayerWithTarget(string name, string job)
+    {
+        Player newPlayer = AddPlayer(name, job);
+        AssignTarget(newPlayer);
+
+        return newPlayer;
+    }
+
+    public Player AddPlayerWithTarget(string name, string job, Player target)
+    {
+        Player newPlayer = AddPlayer(name, job);
+        newPlayer.AssignTarget(target);
+
+        return newPlayer;
+    }
+
+    public Player AddPlayer(string name, string job)
     {
         Player newPlayer = new Player(name, job);
         PlayerList.Add(newPlayer);
-        UI.instance.AddPlayer(newPlayer);
+        UIManager.AddPlayer(newPlayer);
+
+        LoadSave.SaveData(PlayerList);
+        return newPlayer;
     }
 
     public void RemovePlayer(Player player)
@@ -47,10 +105,12 @@ public class GamePlay : MonoBehaviour {
         Debug.Log("Removing player: " + player.PlayerName);
         //set player as removed
         player.RemovePlayer();
-        UI.instance.RemovePlayer(player);
+        UIManager.RemovePlayer(player);
 
         //look for target loss
         CheckLostTarget(player);
+
+        LoadSave.SaveData(PlayerList);
     }
 
     public void KillPlayer(Player victim, Player assassin)
@@ -58,16 +118,39 @@ public class GamePlay : MonoBehaviour {
         Debug.Log("---> " + assassin.PlayerName + " has killed " + victim.PlayerName);
         victim.Killed(assassin);
         assassin.HasKilled();
-        UI.instance.PlayerKilled(victim, assassin);
+        UIManager.PlayerKilled(victim, assassin);
 
-        AssignTarget(assassin,true);
+        int deadCount = 0;
+        foreach (Player dead in PlayerList)
+        {
+            if (dead.IsItDead() == true || dead.isItRemoved() == true) deadCount++;
+        }
 
-        //look for target loss
-        CheckLostTarget(victim);
+        if (deadCount < PlayerList.Count - 1)
+        {
+            AssignTarget(assassin, true);
 
+            //look for target loss
+            CheckLostTarget(victim);
+        }
+        else
+        {
+            Debug.Log("VICTORY for player: " + assassin.PlayerName + " !!!!!");
+            assassin.PlayerWins();
+            UIManager.SetWinner(assassin);
+        }
 
-
+        LoadSave.SaveData(PlayerList);
     }
+
+    public void AssignTargetToPlayer(Player player)
+    {
+        AssignTarget(player,true);
+
+        LoadSave.SaveData(PlayerList);
+        ;    }
+
+    //***** HELPERS ****//
 
     private void CheckLostTarget(Player removedPlayer)
     {
@@ -85,7 +168,7 @@ public class GamePlay : MonoBehaviour {
         }
     }
 
-    public void AssignTarget(Player killer, bool ShowTargetMessage = false)
+    private void AssignTarget(Player killer, bool ShowTargetMessage = false)
     {
 
         List<Player> TargetList = new List<Player>();
@@ -162,12 +245,13 @@ public class GamePlay : MonoBehaviour {
             Player PlayerPick = TargetList[pick];
 
             killer.AssignTarget(PlayerPick); //assign target to killer
+            UIManager.AssignTargetToPlayer(killer);
             Debug.Log("++ Kill assignment: " + killer.PlayerName + " must kill " + PlayerPick.PlayerName);
 
             //display message
             if (ShowTargetMessage == true)
             {
-                UI.instance.AddPlayerAlert(PlayerPick, killer);
+                UIManager.AddPlayerAlert(PlayerPick, killer);
             }
 
         }
@@ -175,7 +259,7 @@ public class GamePlay : MonoBehaviour {
         {
             Debug.Log("No target available for " + killer.PlayerName + ". Victory?");
             killer.PlayerWins();
-            UI.instance.SetWinner(killer);
+            UIManager.SetWinner(killer);
         }
 
     }
@@ -184,8 +268,10 @@ public class GamePlay : MonoBehaviour {
     {
         foreach (Player player in PlayerList)
         {
-            AssignTarget(player,true);
+            AssignTarget(player,false);
         }
+
+        LoadSave.SaveData(PlayerList);
     }
 
     private Dictionary<Player, int> CountPlayersTargetList()
@@ -249,14 +335,20 @@ public class GamePlay : MonoBehaviour {
 
     private void Populate()
     {
+        foreach(Player player in PlayerList)
+        {
+            UIManager.AddPlayer(player);
+        }
+    }
+
+    private void PopulateSample()
+    {
 
         AddPlayer("Player 01", "artisan");
         AddPlayer("Player 02", "artisan");
         AddPlayer("Player 03", "artisan");
         AddPlayer("Player 04", "artisan");
         AddPlayer("Player 05", "artisan");
-
-
     }
 
     private void DisplayPlayersList()

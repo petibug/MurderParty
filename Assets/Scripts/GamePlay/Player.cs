@@ -9,10 +9,10 @@ public class Player : IEquatable<Player>,IComparable<Player>
 
     public string PlayerName;
     public string PlayerJob;
-    private bool isDead;
-    private bool removed;
-    private bool isVictory;
-    private Player Target;
+    public bool isDead;
+    public bool removed;
+    public bool isVictory;
+    public Player Target;
     public Player KilledBy;
     public int kills;
 
@@ -21,10 +21,17 @@ public class Player : IEquatable<Player>,IComparable<Player>
     {
         PlayerName = name;
         PlayerJob = job;
+        Reset();
+    }
+
+    public void Reset()
+    {
         isDead = false;
         removed = false;
         isVictory = false;
         kills = 0;
+        Target = null;
+        KilledBy = null;
     }
 
     public void Killed(Player assassin)

@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class BasicPanel : MonoBehaviour
 {
-
-	// Use this for initialization
+    bool isOpen = false;
+    
+    // Use this for initialization
 	void Start () {
 
 	}
@@ -14,10 +15,24 @@ public class BasicPanel : MonoBehaviour
     public void OpenPanel()
     {
         gameObject.SetActive(true);
+        isOpen = true;
     }
 
     public void ClosePanel()
     {
         gameObject.SetActive(false);
+        isOpen = false;
+    }
+
+    public void SwitchPanel()
+    {
+        if (isOpen == true)
+        {
+            ClosePanel();
+        }
+        else
+        {
+            OpenPanel();
+        }
     }
 }
