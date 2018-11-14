@@ -25,12 +25,10 @@ public class BasicPanel : MonoBehaviour
  
         if (anim != null)
         {
-            Debug.Log(anim);
             anim.SetTrigger("close");
         }
         else
         {
-            Debug.Log("no anim");
             gameObject.SetActive(false);
         }
         isOpen = false;
