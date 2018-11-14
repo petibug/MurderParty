@@ -17,21 +17,21 @@ public class BasicPanel : MonoBehaviour
     public void OpenPanel()
     {
         gameObject.SetActive(true);
-        if (anim != null)
-        {
-            anim.SetTrigger("open");
-        }
         isOpen = true;
     }
 
     public void ClosePanel()
     {
+ 
         if (anim != null)
         {
+            Debug.Log(anim);
             anim.SetTrigger("close");
         }
-        else {
-            Deactivate();
+        else
+        {
+            Debug.Log("no anim");
+            gameObject.SetActive(false);
         }
         isOpen = false;
     }
