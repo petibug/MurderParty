@@ -148,7 +148,23 @@ public class GamePlay : MonoBehaviour {
         AssignTarget(player,true);
 
         LoadSave.SaveData(PlayerList);
-        ;    }
+        ;
+    }
+
+    public void AssignAllTargets()
+    {
+        foreach (Player player in PlayerList)
+        {
+            player.Target = null;
+        }
+
+        foreach (Player player in PlayerList)
+        {
+            AssignTarget(player, false);
+        }
+
+        LoadSave.SaveData(PlayerList);
+    }
 
     //***** HELPERS ****//
 
@@ -264,15 +280,7 @@ public class GamePlay : MonoBehaviour {
 
     }
 
-    private void AssignAllTargets()
-    {
-        foreach (Player player in PlayerList)
-        {
-            AssignTarget(player,false);
-        }
 
-        LoadSave.SaveData(PlayerList);
-    }
 
     private Dictionary<Player, int> CountPlayersTargetList()
     {
