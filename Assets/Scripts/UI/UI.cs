@@ -175,7 +175,9 @@ public class UI : MonoBehaviour {
         SetPlayerName(PlayerPanel, player.PlayerName);
         SetPlayerJob(PlayerPanel, player.PlayerJob);
         string targetName = player.GetTarget() == null ? "" : player.GetTarget().PlayerName;
-        SetPlayerTarget(PlayerPanel, targetName);
+        string targetJob = player.GetTarget() == null ? "" : player.GetTarget().PlayerJob;
+        SetPlayerTarget(PlayerPanel, targetName,targetJob);
+        SetPlayerScore(PlayerPanel, player.kills);
 
         //main buttons
         //Assign target button
@@ -287,10 +289,13 @@ public class UI : MonoBehaviour {
         Name.GetComponent<Text>().text = name;
     }
 
-    private void SetPlayerTarget(GameObject playerUI, String name)
+    private void SetPlayerTarget(GameObject playerUI, String name, String job = "")
     {
         GameObject Name = playerUI.transform.Find("target").gameObject;
         Name.GetComponent<Text>().text = name;
+
+        GameObject Job = playerUI.transform.Find("targetJob").gameObject;
+        if(Job != null) Name.GetComponent<Text>().text = job;
     }
 
     private void SetPlayerScore(GameObject playerUI, int score)
@@ -307,21 +312,18 @@ public class UI : MonoBehaviour {
         PlayerList iconHolder = playerUI.GetComponent<PlayerList>();
         
         iconHolder.SetIcon((int)PlayerList.IconType.nothing);
-        image.color = new Color(1, 1, 1);
+
 
         if (player.IsItDead() == true)
         {
-            image.color = new Color(1, 0, 0);
             iconHolder.SetIcon((int)PlayerList.IconType.dead);
         }
         else if(player.isItRemoved() == true)
         {
-            image.color = new Color(.5f, .5f, .5f);
             iconHolder.SetIcon((int)PlayerList.IconType.removed);
         }
         else if(player.isVictorious() == true)
         {
-            image.color = new Color(0, 1, 0);
             iconHolder.SetIcon((int)PlayerList.IconType.victorious);
         }
         else if(player.GetTarget() != null)
