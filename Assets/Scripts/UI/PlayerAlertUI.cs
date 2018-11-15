@@ -4,7 +4,14 @@ using UnityEngine;
 
 public class PlayerAlertUI : MonoBehaviour {
 
-	public void CloseAlertPanel()
+    public GameObject HideObject;
+
+    private void OnEnable()
+    {
+        HideObject.SetActive(true);
+    }
+
+    public void CloseAlertPanel()
     {
         gameObject.SetActive(false);
         UI.instance.AlertPanelOpen = false;

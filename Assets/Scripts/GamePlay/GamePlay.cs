@@ -99,6 +99,16 @@ public class GamePlay : MonoBehaviour {
         return newPlayer;
     }
 
+    public Player EditPlayer(Player player, string name, string job)
+    {
+        player.PlayerName = name;
+        player.PlayerJob = job;
+        UIManager.EditPlayer(player);
+
+        LoadSave.SaveData(PlayerList);
+        return player;
+    }
+
     public void RemovePlayer(Player player)
     {
         //Remove player

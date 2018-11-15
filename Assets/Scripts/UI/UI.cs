@@ -22,6 +22,8 @@ public class UI : MonoBehaviour {
     public GameObject ConfirmationPanel;
     public GameObject PlayerAlertPanel;
     public GameObject AddPlayerPanel;
+    public GameObject EditPlayerPanel;
+    public GameObject NoPlayerPanel;
 
     public bool AlertPanelOpen;
 
@@ -31,11 +33,17 @@ public class UI : MonoBehaviour {
     public Button AssignTarget_Button;
     public Button RemovePlayer_Button;
     public Button ConfirmationOK_Button;
+    public Button EditPlayer_Button;
+    public Button EditPlayerOK_Button;
 
     private enum ConfirmationTypes { kill, remove, assign };
 
     public Dictionary<Player, GameObject> UIPlayerlist;
     private List<PlayerAlert> PlayerAlerts;
+
+    //inputFields
+    public InputField EditPlayerName_input;
+    public InputField EditPlayerJob_input;
 
     //managers
     GamePlay GamePlayManager;
@@ -67,6 +75,7 @@ public class UI : MonoBehaviour {
         ClearPlayers();
         HidePanels();
         PlayerAlerts.Clear();
+        NoPlayerPanel.SetActive(true);
     }
 
     public void AddPlayer(Player newPlayer)
@@ -79,6 +88,14 @@ public class UI : MonoBehaviour {
         UIPlayerlist.Add(newPlayer, newPlayerUI);
 
         PaintPlayerList(newPlayer);
+
+        NoPlayerPanel.SetActive(false);
+    }
+
+    public void EditPlayer(Player player)
+    {
+        PaintPlayerList(player);
+        PaintPlayerPanel(player);
     }
 
     public void RemovePlayer(Player player)
@@ -128,11 +145,14 @@ public class UI : MonoBehaviour {
         {
             GameObject.Destroy(child.gameObject);
         }
+
+        NoPlayerPanel.SetActive(true);
     }
 
     public void NewGame()
     {
         OpenPanel(AddPlayerPanel);
+        NoPlayerPanel.SetActive(true);
     }
 
     public void ResetPlayer(Player player)
@@ -225,6 +245,18 @@ public class UI : MonoBehaviour {
             button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.kill, player, assassin); });
           //  button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
         }
+
+        //edit player
+
+        EditPlayerName_input.text = player.PlayerName;
+        EditPlayerJob_input.text = player.PlayerJob;
+   
+        EditPlayerPanel formScript = EditPlayerPanel.GetComponent<EditPlayerPanel>();
+        formScript.player = player;
+
+        //edit player button
+        EditPlayer_Button.onClick.RemoveAllListeners();
+        EditPlayer_Button.onClick.AddListener(delegate { OpenPanel(EditPlayerPanel); });
     }
 
     private void PaintPlayerAlert(string victim, string assassin)
@@ -354,6 +386,9 @@ public class UI : MonoBehaviour {
         ConfirmationPanel.SetActive(false);
         PlayerAlertPanel.SetActive(false);
         HomePanel.SetActive(false);
+        AddPlayerPanel.SetActive(false);
+        EditPlayerPanel.SetActive(false);
+        NoPlayerPanel.SetActive(false);
     }
 
     private void ClosePanel (GameObject panel)
