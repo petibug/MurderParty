@@ -17,6 +17,7 @@ public class UI : MonoBehaviour {
     public GameObject HomePanel;
     public RectTransform ListPlayerPanel;
     public GameObject PlayerPanel;
+    public GameObject PlayerPanelTarget;
     public GameObject PlayerPanelAssassin;
     public GameObject ConfirmationPanel;
     public GameObject PlayerAlertPanel;
@@ -26,6 +27,7 @@ public class UI : MonoBehaviour {
 
 
     //buttons
+    public Button KILL_Button;
     public Button AssignTarget_Button;
     public Button RemovePlayer_Button;
     public Button ConfirmationOK_Button;
@@ -174,12 +176,22 @@ public class UI : MonoBehaviour {
         //names 
         SetPlayerName(PlayerPanel, player.PlayerName);
         SetPlayerJob(PlayerPanel, player.PlayerJob);
-        string targetName = player.GetTarget() == null ? "" : player.GetTarget().PlayerName;
-        string targetJob = player.GetTarget() == null ? "" : player.GetTarget().PlayerJob;
-        SetPlayerTarget(PlayerPanel, targetName,targetJob);
         SetPlayerScore(PlayerPanel, player.kills);
 
+        string targetName = player.GetTarget() == null ? "" : player.GetTarget().PlayerName;
+        string targetJob = player.GetTarget() == null ? "" : player.GetTarget().PlayerJob;
+        SetPlayerTarget(PlayerPanelTarget, targetName, targetJob);
+
+
+
+
         //main buttons
+
+        //kill button
+        KILL_Button.onClick.RemoveAllListeners();
+        KILL_Button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.kill, player.GetTarget(), player); });
+
+
         //Assign target button
         AssignTarget_Button.onClick.RemoveAllListeners();
         AssignTarget_Button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.assign, player); });
@@ -218,10 +230,11 @@ public class UI : MonoBehaviour {
     private void PaintPlayerAlert(string victim, string assassin)
     {
         GameObject Name;
-         Name = PlayerAlertPanel.transform.Find("assassinName").gameObject;
+        GameObject Frame = PlayerAlertPanel.transform.Find("Frame").gameObject;
+        Name = Frame.transform.Find("assassinName").gameObject;
         Name.GetComponent<Text>().text = assassin;
 
-         Name = PlayerAlertPanel.transform.Find("victimeName").gameObject;
+         Name = Frame.transform.Find("victimeName").gameObject;
         Name.GetComponent<Text>().text = victim;
     }
 
@@ -233,33 +246,35 @@ public class UI : MonoBehaviour {
         string ConfirmationText = "";
         ConfirmationOK_Button.onClick.RemoveAllListeners();
 
+        string SizePlayer = "<size=200>";
+
         //assign
         switch (type)
         {
             case (int)ConfirmationTypes.assign:
                 //text
-                ConfirmationText = "Are you sure you want to assign a new target to \n" + victim.PlayerName + "?";
+                ConfirmationText = "Are you sure you want to assign a new target to \n" + SizePlayer + victim.PlayerName + "</size>\n?";
                 //buttons
                 ConfirmationOK_Button.onClick.AddListener(delegate { GamePlayManager.AssignTargetToPlayer(victim); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(ConfirmationPanel); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
-
-                break;
+                 break;
 
             case (int)ConfirmationTypes.kill:
                 //text
-                ConfirmationText = "Are you sure you want to confirm that \n" + assassin.PlayerName + " has killed " + victim.PlayerName + "?";
+                ConfirmationText = "Are you sure you want to confirm that \n" + SizePlayer + assassin.PlayerName + "\n</size> has killed \n" + SizePlayer + victim.PlayerName + "</size>\n?";
 
                 //buttons
                 ConfirmationOK_Button.onClick.AddListener(delegate { GamePlayManager.KillPlayer(victim, assassin); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(ConfirmationPanel); });
+                ConfirmationOK_Button.onClick.AddListener(delegate { Handheld.Vibrate(); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
 
                 break;
 
             case (int)ConfirmationTypes.remove:
                 //text
-                ConfirmationText = "Are you sure you want to remove this player: \n" + victim.PlayerName + "?";
+                ConfirmationText = "Are you sure you want to remove this player: \n" + SizePlayer + victim.PlayerName + "</size>\n?";
                 //buttons
                 ConfirmationOK_Button.onClick.AddListener(delegate { GamePlayManager.RemovePlayer(victim); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(ConfirmationPanel); });
@@ -269,7 +284,8 @@ public class UI : MonoBehaviour {
 
         }
 
-        GameObject ConfTextGO = ConfirmationPanel.transform.Find("ConfirmationText").gameObject;
+        GameObject ConfTextGO = ConfirmationPanel.transform.Find("frame").gameObject;
+        ConfTextGO = ConfTextGO.transform.Find("ConfirmationText").gameObject;
         ConfTextGO.GetComponent<Text>().text = ConfirmationText;
     }
 
@@ -291,11 +307,11 @@ public class UI : MonoBehaviour {
 
     private void SetPlayerTarget(GameObject playerUI, String name, String job = "")
     {
-        GameObject Name = playerUI.transform.Find("target").gameObject;
-        Name.GetComponent<Text>().text = name;
+        GameObject NameGO = playerUI.transform.Find("target").gameObject;
+        if (NameGO != null) NameGO.GetComponent<Text>().text = name;
 
-        GameObject Job = playerUI.transform.Find("targetJob").gameObject;
-        if(Job != null) Name.GetComponent<Text>().text = job;
+        GameObject JobGO = playerUI.transform.Find("targetJob").gameObject;
+        if(JobGO != null) JobGO.GetComponent<Text>().text = job;
     }
 
     private void SetPlayerScore(GameObject playerUI, int score)

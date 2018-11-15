@@ -8,9 +8,10 @@ public class HiddenInfo : MonoBehaviour {
     private bool hidden = false;
     public GameObject BigButton;
     public GameObject SmallButton;
-    
+    public GameObject[] InfoToHide;
+
     // Use this for initialization
-	void Start () {
+    void Start () {
         ShowButton();
     }
 	
@@ -19,6 +20,10 @@ public class HiddenInfo : MonoBehaviour {
         hidden = true;
         BigButton.SetActive(false);
         SmallButton.SetActive(true);
+        foreach (GameObject go in InfoToHide)
+        {
+            go.SetActive(true);
+        }
     }
 
     private void ShowButton()
@@ -26,6 +31,10 @@ public class HiddenInfo : MonoBehaviour {
         hidden = false;
         BigButton.SetActive(true);
         SmallButton.SetActive(false);
+        foreach(GameObject go in InfoToHide)
+        {
+            go.SetActive(false);
+        }
     }
 
     public void SwitchButton()

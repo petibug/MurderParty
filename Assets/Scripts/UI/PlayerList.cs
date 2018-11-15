@@ -5,13 +5,32 @@ using UnityEngine.UI;
 
 public class PlayerList : MonoBehaviour {
 
-    public GameObject Target_icon;
-    public GameObject Dead_icon;
-    public GameObject Removed_icon;
-    public GameObject Victorious_icon;
+    public Image Player_icon;
+    public Image Player_background;
+
+    public Sprite Target_icon;
+    public Sprite Dead_icon;
+    public Sprite Removed_icon;
+    public Sprite Victorious_icon;
 
     public Text NameText;
     public Text ScoreText;
+
+    public Sprite SpriteDead;
+    public Sprite SpriteRemoved;
+    public Sprite SpriteWinner;
+    public Sprite SpriteTarget;
+
+    public Color TextNormalColor;
+    public Color TextDeadColor;
+    public Color TextRemovedColor;
+    public Color TextWinnerColor;
+
+    public Color BGNormalColor;
+    public Color BGDeadColor;
+    public Color BGRemovedColor;
+    public Color BGWinnerColor;
+
 
     public enum IconType { target, dead, removed, victorious, nothing}
 
@@ -26,42 +45,53 @@ public class PlayerList : MonoBehaviour {
         switch (type)
         {
             case (int)IconType.target:
-                Target_icon.SetActive(true);
-                Dead_icon.SetActive(false);
-                Removed_icon.SetActive(false);
-                Victorious_icon.SetActive(false);
+                Player_icon.sprite = Target_icon;
+                Player_icon.color = Color.white;
+                Player_background.sprite = SpriteTarget;
+                Player_background.color = BGNormalColor;
+                NameText.color = TextNormalColor;
+                ScoreText.color = TextNormalColor;
+
                 // Debug.Log("icon target");
                 break;
 
             case (int)IconType.dead:
-                Target_icon.SetActive(false);
-                Dead_icon.SetActive(true);
-                Removed_icon.SetActive(false);
-                Victorious_icon.SetActive(false);
+                Player_icon.sprite = Dead_icon;
+                Player_icon.color = Color.white;
+                Player_background.sprite = SpriteDead;
+                Player_background.color = BGDeadColor;
+                NameText.color = TextDeadColor;
+                ScoreText.color = TextDeadColor;
                 // Debug.Log("icon dead");
                 break;
 
             case (int)IconType.removed:
-                Target_icon.SetActive(false);
-                Dead_icon.SetActive(false);
-                Removed_icon.SetActive(true);
-                Victorious_icon.SetActive(false);
+                Player_icon.sprite = Removed_icon;
+                Player_icon.color = Color.white;
+                Player_background.sprite = SpriteRemoved;
+                Player_background.color = BGRemovedColor;
+                NameText.color = TextRemovedColor;
+                ScoreText.color = TextRemovedColor;
                 // Debug.Log("icon removed");
                 break;
 
             case (int)IconType.victorious:
-                Target_icon.SetActive(false);
-                Dead_icon.SetActive(false);
-                Removed_icon.SetActive(false);
-                Victorious_icon.SetActive(true);
+                Player_icon.sprite = Victorious_icon;
+                Player_icon.color = Color.white;
+                Player_background.sprite = SpriteWinner;
+                Player_background.color = BGWinnerColor;
+                NameText.color = TextWinnerColor;
+                ScoreText.color = TextWinnerColor;
                 // Debug.Log("icon removed");
                 break;
 
             case (int)IconType.nothing:
-                Target_icon.SetActive(false);
-                Dead_icon.SetActive(false);
-                Removed_icon.SetActive(false);
-                Victorious_icon.SetActive(false);
+                Player_icon.sprite = null;
+                Player_icon.color = Color.black;
+                Player_background.sprite = null;
+                Player_background.color = BGNormalColor;
+                NameText.color = TextNormalColor;
+                ScoreText.color = TextNormalColor;
                 // Debug.Log("icon nothing");
                 break;
         }
