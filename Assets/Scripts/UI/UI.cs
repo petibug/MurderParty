@@ -24,6 +24,7 @@ public class UI : MonoBehaviour {
     public GameObject AddPlayerPanel;
     public GameObject EditPlayerPanel;
     public GameObject NoPlayerPanel;
+    public GameObject VictoryPanel;
 
     public bool AlertPanelOpen;
 
@@ -112,11 +113,15 @@ public class UI : MonoBehaviour {
     {
         SetPlayerScore(UIPlayerlist[assassin], assassin.kills);
         SetPlayerStyle(victim);
+        Handheld.Vibrate();
     }
 
     public void SetWinner(Player player)
     {
         SetPlayerStyle(player);
+        PaintVictoryPanel(player);
+        OpenPanel(VictoryPanel);
+        Handheld.Vibrate();
     }
 
     public void AddPlayerAlert(Player victim, Player assassin)
@@ -299,7 +304,6 @@ public class UI : MonoBehaviour {
                 //buttons
                 ConfirmationOK_Button.onClick.AddListener(delegate { GamePlayManager.KillPlayer(victim, assassin); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(ConfirmationPanel); });
-                ConfirmationOK_Button.onClick.AddListener(delegate { Handheld.Vibrate(); });
                 ConfirmationOK_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
 
                 break;
@@ -319,6 +323,14 @@ public class UI : MonoBehaviour {
         GameObject ConfTextGO = ConfirmationPanel.transform.Find("frame").gameObject;
         ConfTextGO = ConfTextGO.transform.Find("ConfirmationText").gameObject;
         ConfTextGO.GetComponent<Text>().text = ConfirmationText;
+    }
+
+    private void PaintVictoryPanel(Player player)
+    {
+        GameObject winner = VictoryPanel.transform.Find("Frame").gameObject;
+        winner = winner.transform.Find("WinnerName").gameObject;
+        winner.GetComponent<Text>().text = player.PlayerName;
+
     }
 
     //sub painting
@@ -389,6 +401,7 @@ public class UI : MonoBehaviour {
         AddPlayerPanel.SetActive(false);
         EditPlayerPanel.SetActive(false);
         NoPlayerPanel.SetActive(false);
+        VictoryPanel.SetActive(false);
     }
 
     private void ClosePanel (GameObject panel)

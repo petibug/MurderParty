@@ -24,9 +24,9 @@ public class EditPlayerPanel : MonoBehaviour {
         List<Player> PlayerList = GamePlay.instance.PlayerList;
         PlayerNameList = new List<string>();
 
-        foreach (Player player in PlayerList)
+        foreach (Player pname in PlayerList)
         {
-            PlayerNameList.Add(player.PlayerName);
+            if(player != pname) PlayerNameList.Add(pname.PlayerName);
         }
 
 
