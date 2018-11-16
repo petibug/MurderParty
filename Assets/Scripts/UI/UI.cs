@@ -378,7 +378,7 @@ public class UI : MonoBehaviour {
     {
         GameObject playerUI = UIPlayerlist[player];
 
-        Image image = playerUI.GetComponent<Image>();
+        //Image image = playerUI.GetComponent<Image>();
         PlayerList iconHolder = playerUI.GetComponent<PlayerList>();
         
         iconHolder.SetIcon((int)PlayerList.IconType.nothing);
