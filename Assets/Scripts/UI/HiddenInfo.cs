@@ -10,6 +10,7 @@ public class HiddenInfo : MonoBehaviour {
     public GameObject SmallButton;
     public GameObject[] InfoToHide;
 
+
     // Use this for initialization
     void Start () {
         ShowButton();

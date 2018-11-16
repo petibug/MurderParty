@@ -18,6 +18,7 @@ public class UI : MonoBehaviour {
     public RectTransform ListPlayerPanel;
     public GameObject PlayerPanel;
     public GameObject PlayerPanelTarget;
+    public GameObject PlayerPanelAssassinMain;
     public GameObject PlayerPanelAssassin;
     public GameObject ConfirmationPanel;
     public GameObject PlayerAlertPanel;
@@ -25,6 +26,7 @@ public class UI : MonoBehaviour {
     public GameObject EditPlayerPanel;
     public GameObject NoPlayerPanel;
     public GameObject VictoryPanel;
+    public GameObject[] HiddenInfos;
 
     public bool AlertPanelOpen;
 
@@ -68,7 +70,9 @@ public class UI : MonoBehaviour {
     // Use this for initialization
     void Start() {
         GamePlayManager = GamePlay.instance;
-        
+
+        //make sure all hidden info panel are active
+        ShowHiddenInfoLayers();
     }
 
     public void ResetUI()
@@ -77,6 +81,9 @@ public class UI : MonoBehaviour {
         HidePanels();
         PlayerAlerts.Clear();
         NoPlayerPanel.SetActive(true);
+
+        //make sure all hidden info panel are active
+        ShowHiddenInfoLayers();
     }
 
     public void AddPlayer(Player newPlayer)
@@ -225,9 +232,12 @@ public class UI : MonoBehaviour {
         //Remove player button
         RemovePlayer_Button.onClick.RemoveAllListeners();
         RemovePlayer_Button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.remove, player); });
-       // RemovePlayer_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
+        // RemovePlayer_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
 
         //trackers list
+        //hide panel
+        PlayerPanelAssassinMain.SetActive(false);
+
         //clear list
         foreach (Transform child in PlayerPanelAssassin.transform)
         {
@@ -246,7 +256,7 @@ public class UI : MonoBehaviour {
             SetPlayerName(newPlayerUI, assassin.PlayerName);
 
             //button to assign killer
-            Button button = newPlayerUI.GetComponent<Button>();
+            Button button = newPlayerUI.transform.Find("ButtonKilledBy").GetComponent<Button>();
             button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.kill, player, assassin); });
           //  button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
         }
@@ -402,6 +412,14 @@ public class UI : MonoBehaviour {
         EditPlayerPanel.SetActive(false);
         NoPlayerPanel.SetActive(false);
         VictoryPanel.SetActive(false);
+    }
+
+    void ShowHiddenInfoLayers()
+    {
+        foreach(GameObject go in HiddenInfos)
+        {
+            go.SetActive(true);
+        }
     }
 
     private void ClosePanel (GameObject panel)
