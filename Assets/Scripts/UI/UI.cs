@@ -17,6 +17,7 @@ public class UI : MonoBehaviour {
     public GameObject HomePanel;
     public RectTransform ListPlayerPanel;
     public GameObject PlayerPanel;
+    public GameObject KilledByPanel;
     public GameObject PlayerPanelTarget;
     public GameObject PlayerPanelAssassinMain;
     public GameObject PlayerPanelAssassin;
@@ -227,12 +228,25 @@ public class UI : MonoBehaviour {
         //Assign target button
         AssignTarget_Button.onClick.RemoveAllListeners();
         AssignTarget_Button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.assign, player); });
-       // AssignTarget_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
+        // AssignTarget_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
 
         //Remove player button
+        RemovePlayer_Button.gameObject.SetActive(true);
+        KilledByPanel.SetActive(false);
+
         RemovePlayer_Button.onClick.RemoveAllListeners();
         RemovePlayer_Button.onClick.AddListener(delegate { ConfirmAction((int)ConfirmationTypes.remove, player); });
         // RemovePlayer_Button.onClick.AddListener(delegate { ClosePanel(PlayerPanel); });
+
+
+        //if player killed
+        if(player.IsItDead() == true)
+        {
+            RemovePlayer_Button.gameObject.SetActive(false);
+            KilledByPanel.SetActive(true);
+            KilledByPanel.transform.Find("Text").GetComponent<Text>().text = "Killed by " + player.KilledBy.PlayerName;
+        }
+
 
         //trackers list
         //hide panel
